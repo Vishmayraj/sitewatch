@@ -3,6 +3,8 @@ package monitor
 import (
 	"context"
 	"fmt"
+	"log"
+	"os"
 	"time"
 
 	"sitewatch/internal/checker"
@@ -15,15 +17,27 @@ type Monitor struct {
 	checker  *checker.Checker
 	stats    *stats.Stats
 	interval time.Duration
+	logger   *log.Logger
 }
 
-// New creates a Monitor.
-func New(url string, interval time.Duration, timeout time.Duration) *Monitor {
-	return &Monitor{
+// New creates a Monitor. If logPath is empty, file logging is disabled.
+func New(url string, interval time.Duration, timeout time.Duration, logPath string) *Monitor {
+	m := &Monitor{
 		checker:  checker.New(url, timeout),
 		stats:    stats.New(),
 		interval: interval,
 	}
+
+	if logPath != "" {
+		f, err := os.OpenFile(logPath, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0644)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "warning: could not open log file: %v\n", err)
+		} else {
+			m.logger = log.New(f, "", 0)
+		}
+	}
+
+	return m
 }
 
 // Run starts the monitoring loop. It blocks until the context is cancelled.
@@ -35,7 +49,6 @@ func (m *Monitor) Run(ctx context.Context) {
 
 	for {
 		select {
-		// Graceful closing
 		case <-ctx.Done():
 			m.printFinalStats()
 			return
@@ -48,6 +61,7 @@ func (m *Monitor) Run(ctx context.Context) {
 		case result := <-results:
 			m.stats.Record(result.IsSuccess(), result.Duration)
 			m.printResult(result)
+			m.logResult(result)
 		}
 	}
 }
@@ -67,6 +81,22 @@ func (m *Monitor) printResult(r pkg.Result) {
 		statusText(r.StatusCode),
 		r.Duration.Milliseconds(),
 	)
+}
+
+// logResult writes a single check result to the log file, if logging is enabled.
+func (m *Monitor) logResult(r pkg.Result) {
+	if m.logger == nil {
+		return
+	}
+
+	timestamp := r.Timestamp.Format(time.RFC3339)
+
+	if r.Error != nil {
+		m.logger.Printf("%s ERROR %v", timestamp, r.Error)
+		return
+	}
+
+	m.logger.Printf("%s %d %dms", timestamp, r.StatusCode, r.Duration.Milliseconds())
 }
 
 // printFinalStats prints the summary when monitoring stops.

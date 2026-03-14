@@ -15,12 +15,13 @@ import (
 func main() {
 	// --- CLI Flags ---
 	interval := flag.Duration("interval", 5*time.Second, "check interval (e.g. 5s, 1m)")
-	timeout := flag.Duration("timeout", 10*time.Second, "request timeout (e.g. 3s, 10s)")
+	timeout  := flag.Duration("timeout", 10*time.Second, "request timeout (e.g. 3s, 10s)")
+	logPath  := flag.String("log", "", "path to log file (optional)")
 	flag.Parse()
 
 	// --- Validate positional argument (the URL) ---
 	if flag.NArg() < 1 {
-		fmt.Fprintln(os.Stderr, "usage: sitewatch <url> [--interval 5s] [--timeout 10s]")
+		fmt.Fprintln(os.Stderr, "usage: sitewatch <url> [--interval 5s] [--timeout 10s] [--log file.log]")
 		os.Exit(1)
 	}
 	url := flag.Arg(0)
@@ -28,7 +29,7 @@ func main() {
 	// --- Setup ---
 	fmt.Printf("Monitoring %s every %s (timeout: %s)\n\n", url, *interval, *timeout)
 
-	m := monitor.New(url, *interval, *timeout)
+	m := monitor.New(url, *interval, *timeout, *logPath)
 
 	// --- Graceful shutdown ---
 	ctx, cancel := context.WithCancel(context.Background())
