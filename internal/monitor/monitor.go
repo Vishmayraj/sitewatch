@@ -99,33 +99,28 @@ func (m *Monitor) logResult(r pkg.Result) {
 	m.logger.Printf("%s %d %dms", timestamp, r.StatusCode, r.Duration.Milliseconds())
 }
 
+// output writes a line to stdout and to the log file if enabled.
+func (m *Monitor) output(format string, args ...any) {
+	fmt.Printf(format+"\n", args...)
+	if m.logger != nil {
+		m.logger.Printf(format, args...)
+	}
+}
+
 // printFinalStats prints the summary when monitoring stops.
 func (m *Monitor) printFinalStats() {
 	snap := m.stats.Snapshot()
 
-	fmt.Println("\n--- Monitoring stopped ---")
-	fmt.Printf("Total checks : %d\n", snap.Total)
-	fmt.Printf("Successes    : %d\n", snap.Successes)
-	fmt.Printf("Failures     : %d\n", snap.Failures)
-	fmt.Printf("Uptime       : %.2f%%\n", snap.UptimePct)
+	m.output("\n--- Monitoring stopped ---")
+	m.output("Total checks : %d", snap.Total)
+	m.output("Successes    : %d", snap.Successes)
+	m.output("Failures     : %d", snap.Failures)
+	m.output("Uptime       : %.2f%%", snap.UptimePct)
 
 	if snap.Successes > 0 {
-		fmt.Printf("Latency min  : %dms\n", snap.MinLatency.Milliseconds())
-		fmt.Printf("Latency avg  : %dms\n", snap.AvgLatency.Milliseconds())
-		fmt.Printf("Latency max  : %dms\n", snap.MaxLatency.Milliseconds())
-	}
-
-	if m.logger != nil {
-		m.logger.Printf("--- Monitoring stopped ---")
-		m.logger.Printf("Total checks : %d", snap.Total)
-		m.logger.Printf("Successes    : %d", snap.Successes)
-		m.logger.Printf("Failures     : %d", snap.Failures)
-		m.logger.Printf("Uptime       : %.2f%%", snap.UptimePct)
-		if snap.Successes > 0 {
-			m.logger.Printf("Latency min  : %dms", snap.MinLatency.Milliseconds())
-			m.logger.Printf("Latency avg  : %dms", snap.AvgLatency.Milliseconds())
-			m.logger.Printf("Latency max  : %dms", snap.MaxLatency.Milliseconds())
-		}
+		m.output("Latency min  : %dms", snap.MinLatency.Milliseconds())
+		m.output("Latency avg  : %dms", snap.AvgLatency.Milliseconds())
+		m.output("Latency max  : %dms", snap.MaxLatency.Milliseconds())
 	}
 }
 
