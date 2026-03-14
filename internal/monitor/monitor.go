@@ -114,6 +114,19 @@ func (m *Monitor) printFinalStats() {
 		fmt.Printf("Latency avg  : %dms\n", snap.AvgLatency.Milliseconds())
 		fmt.Printf("Latency max  : %dms\n", snap.MaxLatency.Milliseconds())
 	}
+
+	if m.logger != nil {
+		m.logger.Printf("--- Monitoring stopped ---")
+		m.logger.Printf("Total checks : %d", snap.Total)
+		m.logger.Printf("Successes    : %d", snap.Successes)
+		m.logger.Printf("Failures     : %d", snap.Failures)
+		m.logger.Printf("Uptime       : %.2f%%", snap.UptimePct)
+		if snap.Successes > 0 {
+			m.logger.Printf("Latency min  : %dms", snap.MinLatency.Milliseconds())
+			m.logger.Printf("Latency avg  : %dms", snap.AvgLatency.Milliseconds())
+			m.logger.Printf("Latency max  : %dms", snap.MaxLatency.Milliseconds())
+		}
+	}
 }
 
 // statusText returns a short string for common HTTP status codes.
