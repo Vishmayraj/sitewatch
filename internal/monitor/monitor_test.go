@@ -14,7 +14,7 @@ func TestMonitor_RunsAndStops(t *testing.T) {
 	}))
 	defer server.Close()
 
-	m := New(server.URL, 100*time.Millisecond, 5*time.Second)
+	m := New(server.URL, 100*time.Millisecond, 5*time.Second, "")
 
 	ctx, cancel := context.WithCancel(context.Background())
 
@@ -51,7 +51,7 @@ func TestMonitor_RecordsFailures(t *testing.T) {
 	}))
 	defer server.Close()
 
-	m := New(server.URL, 100*time.Millisecond, 5*time.Second)
+	m := New(server.URL, 100*time.Millisecond, 5*time.Second, "")
 
 	ctx, cancel := context.WithCancel(context.Background())
 	done := make(chan struct{})
